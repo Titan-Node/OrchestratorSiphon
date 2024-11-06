@@ -278,13 +278,10 @@ def getLPTBalance(idx):
 def doSendLPT(idx):
     try:
         transfer_amount = getLPTBalance(idx)
-        Util.log("Should transfer {0} LPT to {1}".format(transfer_amount, State.orchestrators[idx].target_checksum_address_LPT), 2)
+        Util.log("Should transfer {0} LPT to {1}".format(transfer_amount, State.orchestrators[idx].target_checksum_address_ETH), 2)
         # Build transaction info
-        transaction_obj = lpt_token_contract.functions.transfer(State.orchestrators[idx].target_checksum_address_LPT, transfer_amount).build_transaction(
+        transaction_obj = lpt_token_contract.functions.transfer(State.orchestrators[idx].target_checksum_address_ETH, transfer_amount).build_transaction(
             {
-                "from": State.orchestrators[idx].source_checksum_address,
-                'to': State.orchestrators[idx].target_checksum_address_ETH,
-                'value': transfer_amount,
                 "nonce": w3.eth.get_transaction_count(State.orchestrators[idx].source_checksum_address),
                 'gas': 300000,
                 'maxFeePerGas': 2000000000,

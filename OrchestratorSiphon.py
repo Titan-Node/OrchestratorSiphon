@@ -151,7 +151,7 @@ def refreshState():
 
         # Get LPT balance and send to receiver
         if Contract.getLPTBalance(i) > 0:
-            Util.log("{0} has {1:.2f} LPT in their wallet, sending some to {2}...".format(State.orchestrators[i].source_address, Contract.getLPTBalance(i), State.orchestrators[i].target_address_LPT), 2)
+            Util.log("{0} has {1:.2f} LPT in their wallet, sending some to {2}...".format(State.orchestrators[i].source_address, Contract.getLPTBalance(i), State.orchestrators[i].target_address_ETH), 2)
             Contract.doSendLPT(i)
 
         # Lastly: check if we need to call reward
