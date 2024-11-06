@@ -10,6 +10,7 @@ from lib import Util, State
 
 BONDING_CONTRACT_ADDR = '0x35Bcf3c30594191d53231E4FF333E8A770453e40'
 ROUNDS_CONTRACT_ADDR = '0xdd6f56DcC28D3F5f27084381fE8Df634985cc39f'
+LPT_TOKEN_ADDR = '0x289ba1701C2F088cf0faf8B3705246331cB8A839'
 
 
 ### Define contracts
@@ -30,6 +31,7 @@ def getABI(path):
 
 abi_bonding_manager = getABI(State.SIPHON_ROOT + "/contracts/BondingManagerTarget.json")
 abi_rounds_manager = getABI(State.SIPHON_ROOT + "/contracts/RoundsManagerTarget.json")
+abi_lpt_token = getABI(State.SIPHON_ROOT + "/contracts/LPTTokenTarget.json")
 # connect to L2 rpc provider
 provider = web3.HTTPProvider(State.L2_RPC_PROVIDER)
 w3 = web3.Web3(provider)
@@ -37,7 +39,7 @@ assert w3.is_connected()
 # prepare contracts
 bonding_contract = w3.eth.contract(address=BONDING_CONTRACT_ADDR, abi=abi_bonding_manager)
 rounds_contract = w3.eth.contract(address=ROUNDS_CONTRACT_ADDR, abi=abi_rounds_manager)
-
+lpt_token_contract = w3.eth.contract(address=LPT_TOKEN_ADDR, abi=abi_lpt_token)
 
 ### Round refresh logic
 
@@ -256,3 +258,46 @@ def doSendFees(idx):
         Util.log('Transfer ETH success.', 2)
     except Exception as e:
         Util.log("Unable to send ETH: {0}".format(e), 1)
+
+"""
+@brief Gets current ERC-20 LPT balance of Orch address
+@param idx: which Orch # in the set to use
+"""
+def getLPTBalance(idx):
+    try:
+        balance = lpt_token_contract.functions.balanceOf(State.orchestrators[idx].source_checksum_address).call()
+        return balance
+    except Exception as e:
+        Util.log("Unable to get LPT balance: '{0}'".format(e), 1)
+        return 0
+    
+"""
+@brief Send ERC-20 LPT to the receiver wallet
+@param idx: which Orch # in the set to use
+"""
+def doSendLPT(idx):
+    try:
+        transfer_amount = getLPTBalance(idx)
+        Util.log("Should transfer {0} LPT to {1}".format(transfer_amount, State.orchestrators[idx].target_checksum_address_LPT), 2)
+        # Build transaction info
+        transaction_obj = lpt_token_contract.functions.transfer(State.orchestrators[idx].target_checksum_address_LPT, transfer_amount).build_transaction(
+            {
+                "from": State.orchestrators[idx].source_checksum_address,
+                'to': State.orchestrators[idx].target_checksum_address_ETH,
+                'value': transfer_amount,
+                "nonce": w3.eth.get_transaction_count(State.orchestrators[idx].source_checksum_address),
+                'gas': 300000,
+                'maxFeePerGas': 2000000000,
+                'maxPriorityFeePerGas': 1000000000,
+                'chainId': 42161
+            }
+        )
+        # Sign and initiate transaction
+        signed_transaction = w3.eth.account.sign_transaction(transaction_obj, State.orchestrators[idx].source_private_key)
+        transaction_hash = w3.eth.send_raw_transaction(signed_transaction.raw_transaction)
+        Util.log("Initiated transaction with hash {0}".format(transaction_hash.hex()), 2)
+        # Wait for transaction to be confirmed
+        receipt = w3.eth.wait_for_transaction_receipt(transaction_hash)
+        Util.log('Transfer LPT success.', 2)
+    except Exception as e:
+        Util.log("Unable to send LPT: {0}".format(e), 1)
