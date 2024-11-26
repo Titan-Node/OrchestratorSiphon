@@ -94,4 +94,6 @@ For the `systemd` script this means changing ExecStart to `ExecStart=/path/to/Or
 
 If no password file is given, the script will ask the user to input the password to the keystore. You can also switch to interactive mode by sending a 'SIGQUIT' (`<CTRL + \>`) or 'SIGTSTP' (`<CTRL + z>`) signal to the script.
 
+If you want to launch the program in interactive mode exclusively - for example if the script is already running in the background - you can add the one of '--interactive', '-it', '-i' as a launch paramater: ```python3 OrchestratorSiphon/OrchestratorSiphon.py --interactive```
+
 Interactive mode allows you to do more stuff, like voting on proposals or setting a new service URI.

@@ -4,6 +4,7 @@ from datetime import datetime, timezone #< Keep track of timers and expiration o
 import sys #< Used to exit the script
 from getpass import getpass # Used to get user input without printing it to screen
 import signal #< Used to catch terminal signals to switch to interactive mode
+import argparse #< Used to launch the program locked into interactive mode
 # Import our own libraries
 from lib import Util, Contract, User, State
 
@@ -30,6 +31,20 @@ def sigHandler(num, _):
 # Immediately enable listeners for each configured signal
 for name in signal_names:
     signal.signal(getattr(signal, name), sigHandler)
+
+
+### Parse launch arguments
+
+
+parser = argparse.ArgumentParser(description="Orchestrator Siphon")
+parser.add_argument(
+    '-i', '-it', '--interactive', action='store_true', help="Launch the program locked in interactive mode."
+)
+args, unknown = parser.parse_known_args()
+if unknown:
+    Util.log(f"Warning: Skipping unknown arguments: {', '.join(unknown)}", 1)
+State.LOCK_INTERACTIVE = getattr(args, 'interactive', False) or getattr(args, 'it', False) or getattr(args, 'i', False)
+State.require_user_input = State.LOCK_INTERACTIVE
 
 
 ### Orchestrator state
@@ -180,7 +195,7 @@ def refreshState():
 # Now we have everything set up, endlessly loop
 while True:
     current_time = datetime.now(timezone.utc).timestamp()
-    if State.require_user_input:
+    if State.require_user_input or State.LOCK_INTERACTIVE:
         User.handleUserInput()
     else:
         # Main logic of refreshing cached variables and calling contract functions

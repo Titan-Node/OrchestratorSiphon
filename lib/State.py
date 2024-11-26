@@ -81,6 +81,7 @@ L2_RPC_PROVIDER = os.getenv('SIPHON_RPC_L2', config['rpc']['l2'])
 # Other
 LOG_VERBOSITY = int(os.getenv('SIPHON_VERBOSITY', config['other']['verbosity']))
 LOG_TIMESTAMPED = bool(os.getenv('SIPHON_TIMESTAMPED', config.getboolean('other', 'log_timestamped')))
+LOCK_INTERACTIVE = bool = False  # Tracks if the program is locked into interactive mode
 
 # Internal globals
 previous_round_refresh = 0
